@@ -239,27 +239,36 @@ def run_analysis(selected_drug: str, current_meds=None, vcf_path="backend/sample
     # Final JSON Output
     # ------------------------------
     final_output = {
-        "patient_id": patient_id,
-        "timestamp": timestamp,
+    "patient_id": patient_id,
+    "drug": selected_drug,
+    "timestamp": timestamp,
 
-        "drug": selected_drug,
+    "risk_assessment": {
+        "risk_label": risk_result,
+        "confidence_score": confidence_score,
+        "severity": severity.lower()
+    },
 
-        "detected_variants": variant_list,
-        "mapped_variants": mapped_results,
+    "pharmacogenomic_profile": {
+        "primary_gene": mapped_results[0]["gene"] if mapped_results else "Unknown",
+        "diplotype": "Unknown",
+        "phenotype": mapped_results[0]["phenotype"] if mapped_results else "Unknown",
+        "detected_variants": [
+            {"rsid": var} for var in variant_list
+        ]
+    },
 
-        "drug_interactions": interaction_result,
+    "clinical_recommendation": recommendation,
 
-        "risk_assessment": {
-            "risk_label": risk_result,
-            "confidence_score": confidence_score,
-            "severity": severity
-       },
+    "llm_generated_explanation": {
+        "summary": patient_explanation,
+        "mechanism": explanation
+    },
 
-        "clinical_recommendation": recommendation,
-        "explanation": explanation,
-        "patient_explanation": patient_explanation,
+    "quality_metrics": {
+        "vcf_parsing_success": True if variant_list else False
+    }
+    }
 
-        "analysis_flags": analysis_flags
-   }
 
     return final_output
