@@ -24,8 +24,18 @@ def run_analysis(selected_drug: str, current_meds=None, vcf_path="backend/sample
     variant_list = []
 
     for record in reader:
+
+        # record.ID can be list → handle safely
         if record.ID:
-            variant_list.append(record.ID)
+
+            if isinstance(record.ID, list):
+                for rid in record.ID:
+                    if rid:
+                        variant_list.append(str(rid))
+
+            else:
+                variant_list.append(str(record.ID))
+
 
     # ------------------------------
     # Step 2: Variant Mapping
