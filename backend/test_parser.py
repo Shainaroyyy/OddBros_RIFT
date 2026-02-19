@@ -1,9 +1,9 @@
-import vcf
+import vcfpy
 import json
 from datetime import datetime
 
-def run_analysis(selected_drug: str, current_meds=None, vcf_path="backend/sample.vcf"):
 
+def run_analysis(selected_drug: str, current_meds=None, vcf_path="backend/sample.vcf"):
 
     # ------------------------------
     # Input Handling
@@ -16,15 +16,14 @@ def run_analysis(selected_drug: str, current_meds=None, vcf_path="backend/sample
     current_meds = [med.upper() for med in current_meds]
 
     # ------------------------------
-    # Step 1: Read VCF
+    # Step 1: Read VCF (FIXED)
     # ------------------------------
 
-    vcf_reader = vcf.Reader(open(vcf_path, "r"))
-
+    reader = vcfpy.Reader.from_path(vcf_path)
 
     variant_list = []
 
-    for record in vcf_reader:
+    for record in reader:
         if record.ID:
             variant_list.append(record.ID)
 
@@ -88,13 +87,13 @@ def run_analysis(selected_drug: str, current_meds=None, vcf_path="backend/sample
     }
 
     # ------------------------------
-# Step 4B: Drug Interaction Detection
-# ------------------------------
+    # Step 4B: Interaction Detection
+    # ------------------------------
 
     interaction_result = {
-    "interactions_detected": False,
-    "interacting_medications": []
-  }
+        "interactions_detected": False,
+        "interacting_medications": []
+    }
 
     if selected_drug in drug_rules:
 
@@ -105,12 +104,9 @@ def run_analysis(selected_drug: str, current_meds=None, vcf_path="backend/sample
             inhibitors = drug_interactions[drug_gene]["inhibitors"]
 
             for med in current_meds:
-                med_upper = med.upper()
-
-                if med_upper in inhibitors:
+                if med in inhibitors:
                     interaction_result["interactions_detected"] = True
-                    interaction_result["interacting_medications"].append(med_upper)
-
+                    interaction_result["interacting_medications"].append(med)
 
     # ------------------------------
     # Step 5: Risk Assessment
@@ -132,7 +128,7 @@ def run_analysis(selected_drug: str, current_meds=None, vcf_path="backend/sample
                     risk_result = rule[phenotype]
 
     # ------------------------------
-    # Step 6: Clinical Recommendation
+    # Step 6: Recommendation
     # ------------------------------
 
     recommendation = "No pharmacogenomic guidance available."
@@ -144,7 +140,7 @@ def run_analysis(selected_drug: str, current_meds=None, vcf_path="backend/sample
         recommendation = "Reduce dose or consider alternative statin."
 
     # ------------------------------
-    # Step 7: Confidence Score
+    # Step 7: Confidence
     # ------------------------------
 
     confidence_score = 0.3
@@ -159,7 +155,7 @@ def run_analysis(selected_drug: str, current_meds=None, vcf_path="backend/sample
         confidence_score = 0.75
 
     # ------------------------------
-    # Step 8: Severity Classification
+    # Step 8: Severity
     # ------------------------------
 
     severity = "Low"
@@ -171,14 +167,14 @@ def run_analysis(selected_drug: str, current_meds=None, vcf_path="backend/sample
         severity = "Uncertain"
 
     # ------------------------------
-    # Step 9: Metadata
+    # Metadata
     # ------------------------------
 
     patient_id = "PATIENT_001"
     timestamp = datetime.utcnow().isoformat()
 
     # ------------------------------
-    # Step 10: Explanation Layer
+    # Explanation Layer
     # ------------------------------
 
     explanation = "No significant pharmacogenomic risk detected."
@@ -196,79 +192,43 @@ def run_analysis(selected_drug: str, current_meds=None, vcf_path="backend/sample
             "Simvastatin clearance is impaired, increasing risk of muscle toxicity."
         )
 
+    patient_explanation = explanation
 
     # ------------------------------
-    # Step 10B: Patient-Friendly Explanation
+    # Final JSON
     # ------------------------------
 
-    patient_explanation = "No genetic issues affecting this medication were detected."
-
-    if selected_drug == "CODEINE" and risk_result == "Ineffective":
-        patient_explanation = (
-            "Your body may not convert Codeine into its active pain-relief form effectively. "
-            "This means the medication may not work well for pain management."
-       )
-
-    elif selected_drug == "SIMVASTATIN" and risk_result == "Toxicity Risk":
-        patient_explanation = (
-            "Your body may process Simvastatin more slowly, which could increase the risk "
-            "of side effects like muscle pain."
-       )
-
-
-    # ------------------------------
-    # Step 11: Safety Flags
-    # ------------------------------
-
-    analysis_flags = {
-        "unsupported_drug": False,
-        "variants_missing": False,
-        "partial_analysis": False
-    }
-
-    if selected_drug not in drug_rules:
-        analysis_flags["unsupported_drug"] = True
-
-    if len(mapped_results) == 0:
-        analysis_flags["variants_missing"] = True
-
-    if analysis_flags["unsupported_drug"] or analysis_flags["variants_missing"]:
-        analysis_flags["partial_analysis"] = True
-
-    # ------------------------------
-    # Final JSON Output
-    # ------------------------------
     final_output = {
-    "patient_id": patient_id,
-    "drug": selected_drug,
-    "timestamp": timestamp,
+        "patient_id": patient_id,
+        "drug": selected_drug,
+        "timestamp": timestamp,
 
-    "risk_assessment": {
-        "risk_label": risk_result,
-        "confidence_score": confidence_score,
-        "severity": severity.lower()
-    },
+        "risk_assessment": {
+            "risk_label": risk_result,
+            "confidence_score": confidence_score,
+            "severity": severity.lower()
+        },
 
-    "pharmacogenomic_profile": {
-        "primary_gene": mapped_results[0]["gene"] if mapped_results else "Unknown",
-        "diplotype": "Unknown",
-        "phenotype": mapped_results[0]["phenotype"] if mapped_results else "Unknown",
-        "detected_variants": [
-            {"rsid": var} for var in variant_list
-        ]
-    },
+        "pharmacogenomic_profile": {
+            "primary_gene": mapped_results[0]["gene"] if mapped_results else "Unknown",
+            "diplotype": "Unknown",
+            "phenotype": mapped_results[0]["phenotype"] if mapped_results else "Unknown",
+            "detected_variants": [
+                {"rsid": var} for var in variant_list
+            ]
+        },
 
-    "clinical_recommendation": recommendation,
+        "clinical_recommendation": recommendation,
 
-    "llm_generated_explanation": {
-        "summary": patient_explanation,
-        "mechanism": explanation
-    },
+        "llm_generated_explanation": {
+            "summary": patient_explanation,
+            "mechanism": explanation
+        },
 
-    "quality_metrics": {
-        "vcf_parsing_success": True if variant_list else False
+        "quality_metrics": {
+            "vcf_parsing_success": True if variant_list else False
+        }
     }
-    }
-
 
     return final_output
+
