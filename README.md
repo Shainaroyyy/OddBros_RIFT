@@ -249,16 +249,6 @@ http://localhost:8000/docs
 
 ---
 
-## 👥 Team — OddBros_RIFT
-
-| Name            | Role                             |
-| --------------- | -------------------------------- |
-| Sadhika         | Backend & Pharmacogenomic Engine |
-| <Teammate Name> | Frontend Development             |
-| <Teammate Name> | AI / Explainability Layer        |
-
----
-
 ## 📜 License
 
 Developed for RIFT 2026 Hackathon.
