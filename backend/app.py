@@ -7,6 +7,25 @@ from backend.test_parser import run_analysis
 app = FastAPI()
 
 
+# -----------------------------
+# Root Route (Fixes deploy link)
+# -----------------------------
+@app.get("/")
+def root():
+    return {"message": "PharmaGuard API is live 🚀"}
+
+
+# -----------------------------
+# Health Check Route
+# -----------------------------
+@app.get("/health")
+def health_check():
+    return {"status": "ok"}
+
+
+# -----------------------------
+# Analyze VCF Route
+# -----------------------------
 @app.post("/analyze_vcf")
 async def analyze_vcf(
     drug_name: str = Query(...),
