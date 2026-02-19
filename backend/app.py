@@ -1,38 +1,38 @@
-from fastapi import FastAPI, UploadFile, File
-from backend.test_parser import run_analysis
-
+from fastapi import FastAPI, UploadFile, File, Query
 import shutil
 import os
 
+from backend.test_parser import run_analysis
+
 app = FastAPI()
 
-# Ensure upload folder exists
-UPLOAD_DIR = "backend/uploads"
-os.makedirs(UPLOAD_DIR, exist_ok=True)
 
-
-# -----------------------------
-# VCF Upload Endpoint
-# -----------------------------
 @app.post("/analyze_vcf")
 async def analyze_vcf(
-    file: UploadFile = File(...),
-    drug_name: str = "CODEINE"
+    drug_name: str = Query(...),
+    file: UploadFile = File(...)
 ):
+    try:
+        # -----------------------------
+        # Save uploaded file
+        # -----------------------------
+        upload_dir = "backend/uploads"
+        os.makedirs(upload_dir, exist_ok=True)
 
-    # Save uploaded file safely
-    file_path = os.path.join(UPLOAD_DIR, file.filename)
+        file_path = os.path.join(upload_dir, file.filename)
 
-    with open(file_path, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
 
-    # Run analysis
-    result = run_analysis(
-        selected_drug=drug_name,
-        vcf_path=file_path
-    )
+        # -----------------------------
+        # Run analysis
+        # -----------------------------
+        result = run_analysis(
+            selected_drug=drug_name,
+            vcf_path=file_path
+        )
 
-    # Cleanup uploaded file
-    os.remove(file_path)
+        return result
 
-    return result
+    except Exception as e:
+        return {"error": str(e)}
