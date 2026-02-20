@@ -1,14 +1,16 @@
 import os
 from openai import OpenAI
 import vcfpy
-import json
 from datetime import datetime
 
+
 # ------------------------------
-# OpenAI Client
+# OpenAI Client (Safe Init)
 # ------------------------------
 
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+client = OpenAI(api_key=OPENAI_API_KEY) if OPENAI_API_KEY else None
+
 
 # ------------------------------
 # LLM Explanation Generator
@@ -16,29 +18,37 @@ client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 def generate_llm_explanation(drug, gene, phenotype):
 
+    if not client:
+        return "AI explanation not available (API key missing)."
+
     prompt = f"""
-    Patient pharmacogenomic profile:
+Patient pharmacogenomic profile:
 
-    Drug: {drug}
-    Gene: {gene}
-    Phenotype: {phenotype}
+Drug: {drug}
+Gene: {gene}
+Phenotype: {phenotype}
 
-    Explain:
-    - Drug metabolism impact
-    - Clinical risk
-    - Treatment recommendation
-    Keep it medically accurate but concise.
-    """
+Explain:
+- Drug metabolism impact
+- Clinical risk
+- Treatment recommendation
 
-    response = client.chat.completions.create(
-        model="gpt-4.1-mini",
-        messages=[
-            {"role": "system", "content": "You are a pharmacogenomics clinical assistant."},
-            {"role": "user", "content": prompt}
-        ]
-    )
+Keep it medically accurate but concise.
+"""
 
-    return response.choices[0].message.content
+    try:
+        response = client.chat.completions.create(
+            model="gpt-4.1-mini",
+            messages=[
+                {"role": "system", "content": "You are a pharmacogenomics clinical assistant."},
+                {"role": "user", "content": prompt}
+            ]
+        )
+
+        return response.choices[0].message.content
+
+    except Exception:
+        return "AI explanation temporarily unavailable."
 
 
 # ------------------------------
@@ -94,7 +104,6 @@ def run_analysis(selected_drug: str, current_meds=None, vcf_path="backend/sample
                 "phenotype": variant_lookup[variant]["phenotype"]
             })
 
-    # Safe extraction
     primary_gene = mapped_results[0]["gene"] if mapped_results else "Unknown"
     phenotype = mapped_results[0]["phenotype"] if mapped_results else "Unknown"
 
@@ -163,7 +172,7 @@ def run_analysis(selected_drug: str, current_meds=None, vcf_path="backend/sample
     timestamp = datetime.utcnow().isoformat()
 
     # ------------------------------
-    # LLM CALL (FIXED POSITION)
+    # LLM CALL (Now Safe + Optional)
     # ------------------------------
 
     llm_text = generate_llm_explanation(
@@ -198,10 +207,7 @@ def run_analysis(selected_drug: str, current_meds=None, vcf_path="backend/sample
 
         "clinical_recommendation": recommendation,
 
-        "llm_generated_explanation": {
-            "summary": llm_text,
-            "mechanism": llm_text
-        },
+        "llm_generated_explanation": llm_text,
 
         "quality_metrics": {
             "vcf_parsing_success": True if variant_list else False
