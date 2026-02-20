@@ -12,26 +12,28 @@ GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
 if GEMINI_API_KEY:
     genai.configure(api_key=GEMINI_API_KEY)
-    model = genai.GenerativeModel("gemini-1.5-flash-latest")
+    model = genai.GenerativeModel("gemini-1.5-flash")
 else:
     model = None
 
 
 # ------------------------------
-# LLM Explanation Generator (Gemini)
+# LLM Explanation Generator
+# (Gemini + Fallback Layer)
 # ------------------------------
 
-def generate_llm_explanation(drug, gene, phenotype):
+def generate_llm_explanation(drug, gene, phenotype, risk, recommendation):
 
-    if not model:
-        return "AI explanation not available (Gemini API key missing)."
+    # ---------- Try Gemini First ----------
+    if model:
 
-    prompt = f"""
+        prompt = f"""
 Patient pharmacogenomic profile:
 
 Drug: {drug}
 Gene: {gene}
 Phenotype: {phenotype}
+Risk: {risk}
 
 Explain in simple clinical language:
 
@@ -42,12 +44,29 @@ Explain in simple clinical language:
 Keep it concise and medically accurate.
 """
 
-    try:
-        response = model.generate_content(prompt)
-        return response.text
+        try:
+            response = model.generate_content(prompt)
 
-    except Exception as e:
-        return f"Gemini Error: {str(e)}"
+            if response and response.text:
+                return response.text
+
+        except Exception:
+            pass   # If Gemini fails → fallback below
+
+
+    # ---------- FALLBACK RULE-BASED EXPLANATION ----------
+
+    explanation = f"""
+The patient has a {phenotype} phenotype associated with the {gene} gene, which plays a key role in metabolizing the drug {drug}.
+
+Because of this genetic variation, the response to {drug} is classified as '{risk}'. This means the medication may either be less effective or may increase the likelihood of adverse effects depending on metabolic activity.
+
+Clinical recommendation: {recommendation}
+
+Patients with this pharmacogenomic profile should consult a healthcare professional before making medication changes.
+"""
+
+    return explanation.strip()
 
 
 # ------------------------------
@@ -171,13 +190,15 @@ def run_analysis(selected_drug: str, current_meds=None, vcf_path="backend/sample
     timestamp = datetime.utcnow().isoformat()
 
     # ------------------------------
-    # Gemini LLM Call
+    # Explanation Layer (AI + Fallback)
     # ------------------------------
 
     llm_text = generate_llm_explanation(
         drug=selected_drug,
         gene=primary_gene,
-        phenotype=phenotype
+        phenotype=phenotype,
+        risk=risk_result,
+        recommendation=recommendation
     )
 
     # ------------------------------
