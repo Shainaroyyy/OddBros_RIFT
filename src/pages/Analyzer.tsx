@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import FileUpload from "@/components/FileUpload";
 import ResultsCard, { type AnalysisResult, type RiskLevel } from "@/components/ResultsCard";
 import { Dna, Pill, AlertCircle, Loader2 } from "lucide-react";
 
-/* ---------------- MOCK FALLBACK (for demo safety) ---------------- */
+/* ---------------- MOCK FALLBACK ---------------- */
 
 const MOCK_RESULTS: Record<string, AnalysisResult> = {
   warfarin: {
@@ -20,7 +20,6 @@ const MOCK_RESULTS: Record<string, AnalysisResult> = {
     geneReasoning: "CYP2C9 reduced function detected.",
     biologicalMechanism: "Reduced metabolism increases active drug levels.",
   },
-
   clopidogrel: {
     riskLevel: "Ineffective",
     primaryGene: "CYP2C19",
@@ -33,7 +32,6 @@ const MOCK_RESULTS: Record<string, AnalysisResult> = {
     geneReasoning: "Loss-of-function CYP2C19 alleles.",
     biologicalMechanism: "Drug cannot convert to active form.",
   },
-
   codeine: {
     riskLevel: "Toxic",
     primaryGene: "CYP2D6",
@@ -47,7 +45,6 @@ const MOCK_RESULTS: Record<string, AnalysisResult> = {
     geneReasoning: "CYP2D6 duplication detected.",
     biologicalMechanism: "Rapid conversion to morphine causes toxicity.",
   },
-
   simvastatin: {
     riskLevel: "Adjust Dosage",
     primaryGene: "SLCO1B1",
@@ -101,8 +98,13 @@ export default function Analyzer() {
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [error, setError] = useState("");
 
+  // auto clear error when file selected
+  useEffect(() => {
+    if (selectedFile) setError("");
+  }, [selectedFile]);
+
   const handleAnalyze = async () => {
-    if (!selectedFile) {
+    if (!selectedFile || !(selectedFile instanceof File)) {
       setError("Upload a VCF file.");
       return;
     }
@@ -119,16 +121,27 @@ export default function Analyzer() {
     try {
       const formData = new FormData();
       formData.append("file", selectedFile);
-      formData.append("drug", drugName);
-      formData.append("interactions", interactions);
+      formData.append("drug", drugName.trim());
+
+      // send both keys for backend compatibility
+      if (interactions.trim()) {
+        formData.append("interactions", interactions.trim());
+        formData.append("co_medications", interactions.trim());
+      }
+
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 20000);
 
       const response = await fetch(
         "https://oddbros-rift.onrender.com/analyze",
         {
           method: "POST",
           body: formData,
+          signal: controller.signal,
         }
       );
+
+      clearTimeout(timeout);
 
       if (!response.ok) throw new Error("Server error");
 

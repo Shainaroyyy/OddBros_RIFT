@@ -1,44 +1,60 @@
-import { AnalysisResult } from "./ResultsCard";
+import { useRef } from "react";
+import { UploadCloud } from "lucide-react";
 
 interface Props {
-  onResult: (result: AnalysisResult) => void;
+  onFileSelect: (file: File) => void;
+  selectedFile: File | null;
 }
 
-export default function FileUpload({ onResult }: Props) {
-  const runMockAnalysis = () => {
-    const fake: AnalysisResult = {
-      riskLevel: "Adjust Dosage",
-      primaryGene: "CYP2C19",
-      phenotype: "Poor Metabolizer",
-      clinicalRecommendation:
-        "Reduce dosage by 50% and monitor plasma levels.",
-      confidenceScore: 88,
-      interactionDetected: true,
-      interactionDetail: "Interaction with Omeprazole",
-      drugName: "Clopidogrel",
-      patientSummary:
-        "Your body processes this drug slowly. Lower doses may work better.",
-      geneReasoning:
-        "Variant CYP2C19*2 reduces enzyme activity.",
-      biologicalMechanism:
-        "Reduced metabolism increases drug concentration.",
-      interactionExplanation:
-        "Omeprazole inhibits CYP2C19 further.",
-    };
+export default function FileUpload({ onFileSelect, selectedFile }: Props) {
+  const inputRef = useRef<HTMLInputElement | null>(null);
 
-    onResult(fake);
+  const handleClick = () => {
+    inputRef.current?.click();
+  };
+
+  const handleFileChange = (file: File | null) => {
+    if (!file) return;
+    onFileSelect(file);
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    const file = e.dataTransfer.files[0];
+    handleFileChange(file);
   };
 
   return (
-    <div className="border-2 border-dashed p-8 rounded-xl text-center">
-      <p className="mb-4">Upload VCF or run demo analysis</p>
+    <div
+      onClick={handleClick}
+      onDragOver={(e) => e.preventDefault()}
+      onDrop={handleDrop}
+      className="border-2 border-dashed border-border rounded-xl p-8 text-center cursor-pointer hover:bg-muted/30 transition"
+    >
+      <input
+        ref={inputRef}
+        type="file"
+        accept=".vcf"
+        className="hidden"
+        onChange={(e) => handleFileChange(e.target.files?.[0] || null)}
+      />
 
-      <button
-        onClick={runMockAnalysis}
-        className="bg-black text-white px-5 py-2 rounded-lg"
-      >
-        Run Demo Analysis
-      </button>
+      <UploadCloud className="mx-auto mb-3 w-8 h-8 text-muted-foreground" />
+
+      {selectedFile ? (
+        <p className="text-sm font-medium text-foreground">
+          ✅ {selectedFile.name}
+        </p>
+      ) : (
+        <>
+          <p className="text-sm font-medium text-foreground">
+            Drag & drop VCF file here
+          </p>
+          <p className="text-xs text-muted-foreground mt-1">
+            or click to browse
+          </p>
+        </>
+      )}
     </div>
   );
 }
