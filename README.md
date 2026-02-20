@@ -1,256 +1,282 @@
-# OddBros_RIFT
+# 🧬 PharmaGuard — Pharmacogenomic Clinical Decision Support
+### OddBros_RIFT | RIFT 2026 Hackathon
 
-# 🧬 PharmaGuard — AI-Driven Pharmacogenomic Risk Engine
+PharmaGuard is a clinical decision support web application that analyzes patient genomic data (VCF files) to predict drug response risks and guide safer prescribing.
 
-### OddBros_RIFT | RIFT 2026
-
----
-
-## 🧠 Overview
-
-**PharmaGuard** is an AI-assisted pharmacogenomic decision support engine that analyzes patient VCF genomic data to predict drug response risks, therapeutic effectiveness, and clinical recommendations.
-
-It transforms raw genomic variants into clinically interpretable drug safety insights aligned with pharmacogenomic prescribing principles.
-
-The system enables clinicians and researchers to evaluate genomic drug response risks in real time.
+It transforms raw genetic variants into clinically interpretable drug safety insights aligned with pharmacogenomic prescribing principles.
 
 ---
 
-## 🚀 Live Deployment
+## 🌐 Live Application
 
-🔗 **API Base URL**
-[https://oddbros-rift.onrender.com](https://oddbros-rift.onrender.com)
+### 🔗 Web App (Frontend)
+https://oddbrosrift.vercel.app
 
-🔗 **Swagger API Docs**
-[https://oddbros-rift.onrender.com/docs](https://oddbros-rift.onrender.com/docs)
+### 🔗 Backend API
+https://oddbros-rift.onrender.com
 
-🔗 **Health Check**
-[https://oddbros-rift.onrender.com/health](https://oddbros-rift.onrender.com/health)
+### 🔗 API Docs
+https://oddbros-rift.onrender.com/docs
 
----
-
-## 🎯 Problem Context
-
-Drug response varies significantly based on genetic makeup. Without genomic analysis:
-
-* Prescriptions may be ineffective
-* Patients may face toxicity risks
-* Adverse drug reactions increase
-
-PharmaGuard bridges genomic data with pharmacogenomic drug intelligence to support precision prescribing.
+### 🔗 Health Check
+https://oddbros-rift.onrender.com/health
 
 ---
 
-## 🧠 Solution Capabilities
+## 🎯 Problem
 
-* Parses patient VCF genomic files
-* Detects pharmacogenomic variants
-* Maps variants → genes → phenotypes
-* Applies drug-gene interaction rules
-* Predicts therapeutic effectiveness
-* Generates clinical recommendations
-* Provides explainability for risk outcomes
-* Outputs structured JSON medical reports
+Drug response varies significantly due to genetic variation.
+
+Without pharmacogenomic insights:
+
+- medications may be ineffective  
+- toxicity risks increase  
+- adverse drug reactions rise  
+- trial-and-error prescribing delays treatment  
+
+PharmaGuard bridges genomic data with pharmacogenomic intelligence to support precision medicine.
+
+---
+
+## 💡 Solution
+
+PharmaGuard provides an end-to-end workflow:
+
+1. Upload genomic VCF file  
+2. Enter prescribed drug  
+3. Detect pharmacogenomic variants  
+4. Predict drug safety & effectiveness  
+5. Generate clinician & patient insights  
+
+---
+
+## 🔬 Key Features
+
+### 🧬 Genotypic Analysis
+- VCF file parsing
+- Variant extraction
+- Gene identification
+
+### 💊 Pharmacogenomic Intelligence
+- Gene → phenotype interpretation
+- Drug–gene interaction rules
+- Drug–drug interaction detection
+
+### ⚕️ Clinical Decision Support
+- Risk classification (Safe / Adjust / Toxic / Ineffective)
+- Evidence-based recommendations
+- Confidence scoring
+
+### 👩‍⚕️ Dual Clinical Views
+- **Doctor View** → technical reasoning & clinical detail  
+- **Patient View** → simplified explanation  
+
+### 📊 Explainability
+- Biological mechanism insights
+- Gene reasoning transparency
+- Interaction explanations
+
+---
+
+## 🖥️ How It Works
+
+
+User uploads VCF + drug name (Frontend UI)
+↓
+React Frontend sends file to FastAPI
+↓
+VCF Parsing Engine (vcfpy)
+↓
+Variant → Gene Mapping
+↓
+Pharmacogenomic Rules Engine
+↓
+Risk Classification & Recommendations
+↓
+JSON Response
+↓
+Clinical Results Dashboard
+
 
 ---
 
 ## 🏗️ System Architecture
 
-```
-Patient Uploads VCF
-        ↓
-FastAPI Backend API
-        ↓
-VCF Parsing Engine (vcfpy)
-        ↓
-Variant Extraction
-        ↓
-Gene Mapping Engine
-        ↓
-Drug Risk Rules Engine
-        ↓
-Clinical Recommendation Layer
-        ↓
-Explainability Generator
-        ↓
-Structured JSON Output
-```
+### Frontend
+- React + Vite
+- Tailwind CSS
+- Drag & drop VCF upload
+- Clinical results dashboard
+
+### Backend
+- FastAPI
+- vcfpy parser
+- pharmacogenomic rule engine
+- structured JSON output
 
 ---
 
 ## ⚙️ Tech Stack
 
-| Layer           | Technology        |
-| --------------- | ----------------- |
-| Backend         | FastAPI           |
-| Parsing Engine  | vcfpy             |
-| Language        | Python 3          |
-| Deployment      | Render            |
-| API Docs        | Swagger / OpenAPI |
-| Data Format     | JSON              |
-| Version Control | GitHub            |
+| Layer | Technology |
+|------|-----------|
+| Frontend | React + Vite |
+| UI | Tailwind CSS |
+| Backend | FastAPI |
+| Parsing Engine | vcfpy |
+| Language | Python |
+| Deployment (Frontend) | Vercel |
+| Deployment (Backend) | Render |
+| API Docs | Swagger/OpenAPI |
+| Data Format | JSON |
 
 ---
 
 ## 📂 Repository Structure
 
-```
+
 backend/
- ├── app.py              # FastAPI routes & file upload handling
- ├── test_parser.py     # Genomic analysis engine
- ├── uploads/           # Temporary uploaded VCF files
- └── sample.vcf         # Sample test file
+app.py
+parser.py
+sample.vcf
+
+frontend/
+src/
+components/
+pages/
 
 requirements.txt
+package.json
 README.md
-```
+
 
 ---
 
-## 🔌 API Documentation
+## 🧪 Usage Flow
 
-### POST `/analyze_vcf`
-
-Analyzes patient genomic data for pharmacogenomic drug risk.
-
----
-
-### Parameters
-
-| Name      | Type         | Required |
-| --------- | ------------ | -------- |
-| drug_name | Query String | Yes      |
-| file      | VCF Upload   | Yes      |
+1️⃣ Open the web app  
+2️⃣ Upload a VCF file  
+3️⃣ Enter drug name (e.g. Warfarin)  
+4️⃣ Click **Analyze**  
+5️⃣ View risk classification & recommendations  
 
 ---
 
-### Example Request
+## 🧪 Sample Drugs for Demo
 
-Upload:
-
-* Drug Name → `CODEINE`
-* File → `.vcf`
-
-Via Swagger UI or Postman.
+- Warfarin  
+- Clopidogrel  
+- Codeine  
+- Simvastatin  
 
 ---
 
-### Example Response
+## 🔌 API Endpoint
+
+### POST `/analyze`
+
+**Form Data**
+
+| Field | Type | Required |
+|------|------|---------|
+| file | VCF | Yes |
+| drug | string | Yes |
+| interactions | string | Optional |
+
+---
+
+## 📄 Example Response
 
 ```json
 {
-  "patient_id": "PATIENT_001",
-  "drug": "CODEINE",
-  "risk_assessment": {
-    "risk_label": "Ineffective",
-    "confidence_score": 0.92,
-    "severity": "high"
-  },
-  "pharmacogenomic_profile": {
-    "primary_gene": "SLCO1B1",
-    "phenotype": "Poor Transporter"
-  },
-  "clinical_recommendation": "Avoid Codeine. Consider Morphine alternatives."
+  "drugName": "Warfarin",
+  "riskLevel": "Adjust Dosage",
+  "primaryGene": "CYP2C9",
+  "phenotype": "Poor Metabolizer",
+  "clinicalRecommendation": "Reduce dose by 30–50%. Monitor INR."
 }
-```
+🧬 Clinical Alignment
 
----
+PharmaGuard follows pharmacogenomic principles inspired by:
 
-## 🧪 Test Case Validation
+CPIC (Clinical Pharmacogenetics Implementation Consortium)
 
-System validated using pharmacogenomic VCF test datasets.
+genotype → phenotype translation
 
-Testing ensured:
+evidence-based dosing guidance
 
-* Variant extraction accuracy
-* Gene mapping correctness
-* Drug risk rule triggering
-* JSON schema compliance
-* Parsing success validation
+🎥 Demo Video
 
----
-
-## 🖥️ Frontend Integration Ready
-
-Backend supports seamless frontend integration via:
-
-* Multipart file upload
-* Query parameter drug input
-* Structured JSON responses
-* Auto-generated API docs
-
-Frontend analyzer dashboard can visualize:
-
-* Risk classification
-* Clinical recommendations
-* Variant profiles
-* Explainability insights
-
----
-
-## 🎥 Demo Video
-
-LinkedIn demo link: *(Add after recording)*
+📌 LinkedIn Demo: (Add after upload)
 
 Demo should include:
 
-* Architecture walkthrough
-* Live deployment testing
-* File upload workflow
-* Risk output interpretation
+architecture walkthrough
 
----
+live deployment demo
 
-## 🛠️ Local Setup
+VCF upload workflow
 
-Clone repository:
+risk output interpretation
 
-```bash
-git clone <repo_url>
-cd backend
-```
-
-Install dependencies:
-
-```bash
+🛠️ Local Setup
+Backend
 pip install -r requirements.txt
-```
+uvicorn app:app --reload
+Frontend
+npm install
+npm run dev
+📦 Deployment
 
-Run server:
+Frontend hosted on Vercel
 
-```bash
-uvicorn backend.app:app --reload
-```
+Backend hosted on Render
 
-Access docs locally:
+Public API access enabled
 
-```
-http://localhost:8000/docs
-```
+GitHub integrated deployment
 
----
+🔮 Future Enhancements
 
-## 📦 Deployment Details
+Expanded CPIC gene coverage
 
-* Hosted on Render Web Service
-* ASGI server: Uvicorn
-* Public API deployment
-* GitHub integrated
+Multi-drug therapy risk modeling
 
----
+Clinical PDF report export
 
-## 🔮 Future Scope
+EHR system integration
 
-* Expanded CPIC gene coverage
-* Multi-drug interaction modeling
-* Clinical decision dashboards
-* EHR system integration
-* LLM-driven clinical reasoning
+AI-powered clinical reasoning layer
 
----
+👥 Team
 
-## 📜 License
+OddBros_RIFT
+RIFT 2026 Hackathon
+
+📜 License
 
 Developed for RIFT 2026 Hackathon.
 For academic and demonstration purposes.
 
+
+---
+
+### ✅ Before you submit (important)
+
+Add:
+
+✔ LinkedIn demo link  
+✔ sample.vcf in repo  
+✔ frontend folder present  
+✔ repo public  
+
+---
+
+If you want, I can next:
+
+✅ check your repo for compliance  
+✅ write LinkedIn demo caption with hashtags  
+✅ give a 60-sec demo script  
+✅ predict judge questions & answers  
+
+You’re at submission finish line now.
