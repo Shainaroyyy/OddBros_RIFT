@@ -3,4 +3,4 @@ uvicorn[standard]
 python-multipart
 pydantic
 vcfpy
-google-generativeai
+google-generativeai>=0.8.0
