@@ -263,23 +263,3 @@ For academic and demonstration purposes.
 
 
 ---
-
-### ✅ Before you submit (important)
-
-Add:
-
-✔ LinkedIn demo link  
-✔ sample.vcf in repo  
-✔ frontend folder present  
-✔ repo public  
-
----
-
-If you want, I can next:
-
-✅ check your repo for compliance  
-✅ write LinkedIn demo caption with hashtags  
-✅ give a 60-sec demo script  
-✅ predict judge questions & answers  
-
-You’re at submission finish line now.
