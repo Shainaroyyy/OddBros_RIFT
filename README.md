@@ -226,6 +226,9 @@ uvicorn app:app --reload
 Frontend
 npm install
 npm run dev
+
+```
+
 📦 Deployment
 
 Frontend hosted on Vercel
