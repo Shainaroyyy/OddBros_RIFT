@@ -1,13 +1,51 @@
+import os
+from openai import OpenAI
 import vcfpy
 import json
 from datetime import datetime
 
+# ------------------------------
+# OpenAI Client
+# ------------------------------
+
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+# ------------------------------
+# LLM Explanation Generator
+# ------------------------------
+
+def generate_llm_explanation(drug, gene, phenotype):
+
+    prompt = f"""
+    Patient pharmacogenomic profile:
+
+    Drug: {drug}
+    Gene: {gene}
+    Phenotype: {phenotype}
+
+    Explain:
+    - Drug metabolism impact
+    - Clinical risk
+    - Treatment recommendation
+    Keep it medically accurate but concise.
+    """
+
+    response = client.chat.completions.create(
+        model="gpt-4.1-mini",
+        messages=[
+            {"role": "system", "content": "You are a pharmacogenomics clinical assistant."},
+            {"role": "user", "content": prompt}
+        ]
+    )
+
+    return response.choices[0].message.content
+
+
+# ------------------------------
+# MAIN ANALYSIS FUNCTION
+# ------------------------------
 
 def run_analysis(selected_drug: str, current_meds=None, vcf_path="backend/sample.vcf"):
-
-    # ------------------------------
-    # Input Handling
-    # ------------------------------
 
     if current_meds is None:
         current_meds = []
@@ -16,29 +54,23 @@ def run_analysis(selected_drug: str, current_meds=None, vcf_path="backend/sample
     current_meds = [med.upper() for med in current_meds]
 
     # ------------------------------
-    # Step 1: Read VCF (FIXED)
+    # Step 1 — Read VCF
     # ------------------------------
 
     reader = vcfpy.Reader.from_path(vcf_path)
-
     variant_list = []
 
     for record in reader:
-
-        # record.ID can be list → handle safely
         if record.ID:
-
             if isinstance(record.ID, list):
                 for rid in record.ID:
                     if rid:
                         variant_list.append(str(rid))
-
             else:
                 variant_list.append(str(record.ID))
 
-
     # ------------------------------
-    # Step 2: Variant Mapping
+    # Step 2 — Variant Mapping
     # ------------------------------
 
     variant_lookup = {
@@ -62,8 +94,12 @@ def run_analysis(selected_drug: str, current_meds=None, vcf_path="backend/sample
                 "phenotype": variant_lookup[variant]["phenotype"]
             })
 
+    # Safe extraction
+    primary_gene = mapped_results[0]["gene"] if mapped_results else "Unknown"
+    phenotype = mapped_results[0]["phenotype"] if mapped_results else "Unknown"
+
     # ------------------------------
-    # Step 3: Drug Risk Rules
+    # Step 3 — Drug Rules
     # ------------------------------
 
     drug_rules = {
@@ -77,68 +113,20 @@ def run_analysis(selected_drug: str, current_meds=None, vcf_path="backend/sample
         }
     }
 
-    # ------------------------------
-    # Step 4: Drug Interaction DB
-    # ------------------------------
-
-    drug_interactions = {
-        "CYP2D6": {
-            "inhibitors": [
-                "FLUOXETINE",
-                "PAROXETINE",
-                "BUPROPION"
-            ]
-        },
-        "SLCO1B1": {
-            "inhibitors": [
-                "CYCLOSPORINE"
-            ]
-        }
-    }
-
-    # ------------------------------
-    # Step 4B: Interaction Detection
-    # ------------------------------
-
-    interaction_result = {
-        "interactions_detected": False,
-        "interacting_medications": []
-    }
-
-    if selected_drug in drug_rules:
-
-        drug_gene = drug_rules[selected_drug]["gene"]
-
-        if drug_gene in drug_interactions:
-
-            inhibitors = drug_interactions[drug_gene]["inhibitors"]
-
-            for med in current_meds:
-                if med in inhibitors:
-                    interaction_result["interactions_detected"] = True
-                    interaction_result["interacting_medications"].append(med)
-
-    # ------------------------------
-    # Step 5: Risk Assessment
-    # ------------------------------
-
     risk_result = "Unknown"
 
     for variant in mapped_results:
-
         gene = variant["gene"]
-        phenotype = variant["phenotype"]
+        pheno = variant["phenotype"]
 
         if selected_drug in drug_rules:
-
             rule = drug_rules[selected_drug]
 
-            if gene == rule["gene"]:
-                if phenotype in rule:
-                    risk_result = rule[phenotype]
+            if gene == rule["gene"] and pheno in rule:
+                risk_result = rule[pheno]
 
     # ------------------------------
-    # Step 6: Recommendation
+    # Step 4 — Recommendation
     # ------------------------------
 
     recommendation = "No pharmacogenomic guidance available."
@@ -150,31 +138,22 @@ def run_analysis(selected_drug: str, current_meds=None, vcf_path="backend/sample
         recommendation = "Reduce dose or consider alternative statin."
 
     # ------------------------------
-    # Step 7: Confidence
+    # Confidence + Severity
     # ------------------------------
 
     confidence_score = 0.3
 
     if risk_result == "Ineffective":
         confidence_score = 0.92
-
     elif risk_result == "Toxicity Risk":
         confidence_score = 0.89
 
-    elif risk_result == "Safe":
-        confidence_score = 0.75
-
-    # ------------------------------
-    # Step 8: Severity
-    # ------------------------------
-
-    severity = "Low"
+    severity = "low"
 
     if risk_result in ["Ineffective", "Toxicity Risk"]:
-        severity = "High"
-
+        severity = "high"
     elif risk_result == "Unknown":
-        severity = "Uncertain"
+        severity = "uncertain"
 
     # ------------------------------
     # Metadata
@@ -184,28 +163,17 @@ def run_analysis(selected_drug: str, current_meds=None, vcf_path="backend/sample
     timestamp = datetime.utcnow().isoformat()
 
     # ------------------------------
-    # Explanation Layer
+    # LLM CALL (FIXED POSITION)
     # ------------------------------
 
-    explanation = "No significant pharmacogenomic risk detected."
-
-    if selected_drug == "CODEINE" and risk_result == "Ineffective":
-        explanation = (
-            "Patient has CYP2D6 Poor Metabolizer phenotype. "
-            "Codeine requires CYP2D6 activation to convert into morphine. "
-            "Reduced enzyme activity may lead to ineffective pain relief."
-        )
-
-    elif selected_drug == "SIMVASTATIN" and risk_result == "Toxicity Risk":
-        explanation = (
-            "SLCO1B1 transporter function is reduced. "
-            "Simvastatin clearance is impaired, increasing risk of muscle toxicity."
-        )
-
-    patient_explanation = explanation
+    llm_text = generate_llm_explanation(
+        drug=selected_drug,
+        gene=primary_gene,
+        phenotype=phenotype
+    )
 
     # ------------------------------
-    # Final JSON
+    # Final Output
     # ------------------------------
 
     final_output = {
@@ -216,13 +184,13 @@ def run_analysis(selected_drug: str, current_meds=None, vcf_path="backend/sample
         "risk_assessment": {
             "risk_label": risk_result,
             "confidence_score": confidence_score,
-            "severity": severity.lower()
+            "severity": severity
         },
 
         "pharmacogenomic_profile": {
-            "primary_gene": mapped_results[0]["gene"] if mapped_results else "Unknown",
+            "primary_gene": primary_gene,
             "diplotype": "Unknown",
-            "phenotype": mapped_results[0]["phenotype"] if mapped_results else "Unknown",
+            "phenotype": phenotype,
             "detected_variants": [
                 {"rsid": var} for var in variant_list
             ]
@@ -231,8 +199,8 @@ def run_analysis(selected_drug: str, current_meds=None, vcf_path="backend/sample
         "clinical_recommendation": recommendation,
 
         "llm_generated_explanation": {
-            "summary": patient_explanation,
-            "mechanism": explanation
+            "summary": llm_text,
+            "mechanism": llm_text
         },
 
         "quality_metrics": {
@@ -241,4 +209,3 @@ def run_analysis(selected_drug: str, current_meds=None, vcf_path="backend/sample
     }
 
     return final_output
-
