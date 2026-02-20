@@ -1,25 +1,30 @@
 import os
-from openai import OpenAI
 import vcfpy
 from datetime import datetime
+import google.generativeai as genai
 
 
 # ------------------------------
-# OpenAI Client (Safe Init)
+# Gemini Configuration
 # ------------------------------
 
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-client = OpenAI(api_key=OPENAI_API_KEY) if OPENAI_API_KEY else None
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+
+if GEMINI_API_KEY:
+    genai.configure(api_key=GEMINI_API_KEY)
+    model = genai.GenerativeModel("gemini-1.5-flash")
+else:
+    model = None
 
 
 # ------------------------------
-# LLM Explanation Generator
+# LLM Explanation Generator (Gemini)
 # ------------------------------
 
 def generate_llm_explanation(drug, gene, phenotype):
 
-    if not client:
-        return "AI explanation not available (API key missing)."
+    if not model:
+        return "AI explanation not available (Gemini API key missing)."
 
     prompt = f"""
 Patient pharmacogenomic profile:
@@ -28,27 +33,21 @@ Drug: {drug}
 Gene: {gene}
 Phenotype: {phenotype}
 
-Explain:
-- Drug metabolism impact
-- Clinical risk
-- Treatment recommendation
+Explain in simple clinical language:
 
-Keep it medically accurate but concise.
+• Drug metabolism impact  
+• Clinical risk  
+• Treatment recommendation  
+
+Keep it concise and medically accurate.
 """
 
     try:
-        response = client.chat.completions.create(
-            model="gpt-4.1-mini",
-            messages=[
-                {"role": "system", "content": "You are a pharmacogenomics clinical assistant."},
-                {"role": "user", "content": prompt}
-            ]
-        )
-
-        return response.choices[0].message.content
+        response = model.generate_content(prompt)
+        return response.text
 
     except Exception as e:
-        return f"LLM ERROR: {str(e)}"
+        return f"Gemini Error: {str(e)}"
 
 
 # ------------------------------
@@ -172,7 +171,7 @@ def run_analysis(selected_drug: str, current_meds=None, vcf_path="backend/sample
     timestamp = datetime.utcnow().isoformat()
 
     # ------------------------------
-    # LLM CALL (Now Safe + Optional)
+    # Gemini LLM Call
     # ------------------------------
 
     llm_text = generate_llm_explanation(
