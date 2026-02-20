@@ -47,8 +47,8 @@ Keep it medically accurate but concise.
 
         return response.choices[0].message.content
 
-    except Exception:
-        return "AI explanation temporarily unavailable."
+    except Exception as e:
+        return f"LLM ERROR: {str(e)}"
 
 
 # ------------------------------
